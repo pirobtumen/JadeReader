@@ -97,8 +97,6 @@ class ReaderDB:
 		if data_empty:
 			self.delete_category( category )
 
-		self.save_data()
-
 		return data_empty
 
 	def delete_category(self, category):
@@ -107,22 +105,30 @@ class ReaderDB:
 	# Web Entries
 	#---------------------------------------------------------------------------
 
-	def add(self, obj):
+	def add(self, entry):
 		# TODO: change key
 		key = str(len(self.data))
-		self.data[key] = obj
+		self.data[key] = entry
 
 		self.update_category( obj.get_category(), key )
 
-		self.save_data()
-
 		return key
+
+	def update(self, key, entry):
+		old_category = self.get(key).get_category()
+
+		# Remove category key
+		self.delete_category_element( old_category, key )
+
+		# Add to the new category
+		self.update_category( entry.get_category(), key )
+
+		# Update data
+		self.data[key] = entry
+
 
 	def get(self, key):
 		return self.data[key]
-
-	def set(self, key, obj):
-		self.data[key] = obj
 
 	def delete(self, key):
 		del self.data[key]
@@ -148,6 +154,9 @@ class ReaderEntry:
 
 	def get_category(self):
 		return self.data[ self.cat_pos ]
+
+	def get_data(self):
+		return self.data
 
 	def valid(self):
 		# TODO: validate data

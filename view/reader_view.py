@@ -33,44 +33,7 @@ from model import reader
 # Classes
 #-------------------------------------------------------------------------------
 
-class GetDataDialog( Gtk.Dialog ):
-	def __init__(self, parent):
-		Gtk.Dialog.__init__(self, "New category", parent, 0 )
-		self.set_default_size(150, 100)
-
-		# Text entry, when enter is pressed the default event is
-		# triggered -> "OK" Button
-		self.entry = Gtk.Entry()
-		self.entry.set_activates_default(True)
-
-		label = Gtk.Label("Name:")
-
-		box = self.get_content_area()
-		box.add(label)
-		box.add(self.entry)
-
-		super(Gtk.Dialog, self).add_button( "Cancel", Gtk.ResponseType.CANCEL )
-		super(Gtk.Dialog, self).add_button( "Ok", Gtk.ResponseType.OK )
-
-		# Set as the default action
-		ok_bttn = self.get_widget_for_response(response_id=Gtk.ResponseType.OK)
-		ok_bttn.set_can_default(True)
-		ok_bttn.grab_default()
-
-	#---------------------------------------------------------------------------
-
-	def run(self):
-		self.show_all()
-		result = super(Gtk.Dialog, self).run()
-		if result == Gtk.ResponseType.OK:
-		    text = self.entry.get_text()
-		else:
-		    text = None
-		self.destroy()
-
-		return text
-
-class AddUrlDialog( Gtk.Dialog ):
+class UrlDialog( Gtk.Dialog ):
 	def __init__(self, parent, categories, buttons=None):
 		Gtk.Dialog.__init__(self, "New category", parent, 0 )
 		self.set_default_size(150, 100)
@@ -118,12 +81,27 @@ class AddUrlDialog( Gtk.Dialog ):
 		main_box.add( grid )
 
 		super(Gtk.Dialog, self).add_button( "Cancel", Gtk.ResponseType.CANCEL )
-		super(Gtk.Dialog, self).add_button( "Ok", Gtk.ResponseType.OK )
+		super(Gtk.Dialog, self).add_button( "Save", Gtk.ResponseType.OK )
 
 		# Set as the default action
 		ok_bttn = self.get_widget_for_response(response_id=Gtk.ResponseType.OK)
 		ok_bttn.set_can_default(True)
 		ok_bttn.grab_default()
+
+	#---------------------------------------------------------------------------
+
+	def set_name(self, name):
+		self.name.set_text(name)
+
+	#---------------------------------------------------------------------------
+
+	def set_url(self, url):
+		self.url.set_text(url)
+	#---------------------------------------------------------------------------
+
+	def set_category(self, category):
+		cat_entry = self.cat.get_child()
+		cat_entry.set_text( category )
 
 	#---------------------------------------------------------------------------
 
@@ -153,7 +131,10 @@ class ReaderEntryView(Gtk.ListBoxRow):
 		logo = Gtk.Label("Icon", valign=Gtk.Align.CENTER )
 		name = Gtk.Label( self.entry.get_name() )
 		url = Gtk.Label( self.entry.get_url() )
+
 		edit_btn = Gtk.Button("Edit")
+		edit_btn.connect( "clicked", self.btn_edit_entry )
+
 		delete_btn = Gtk.Button("Delete")
 		delete_btn.connect( "clicked", self.btn_del_entry )
 
@@ -190,6 +171,10 @@ class ReaderEntryView(Gtk.ListBoxRow):
 
 	def btn_del_entry(self, button):
 		self.parent.del_web_entry( self.key )
+
+	def btn_edit_entry(self, button):
+		self.parent.edit_web_entry( self.key, self.entry )
+
 
 	"""
 	get_key
@@ -329,7 +314,7 @@ class ReaderView( Gtk.Window ):
 			category = model[treeiter][0]
 			if category != self.current_category:
 				self.current_category = category
-				self.show_category_entries( category )
+				self.load_category_entries( category )
 
 	#---------------------------------------------------------------------------
 
@@ -337,8 +322,6 @@ class ReaderView( Gtk.Window ):
 		# TODO: create a window
 		if entry != None:
 			url = entry.get_url()
-			#self.open_browser( url )
-			entry.entry.url = "HOLA"
 			url_view = WebView( self, entry )
 
 	#---------------------------------------------------------------------------
@@ -350,7 +333,7 @@ class ReaderView( Gtk.Window ):
 	#---------------------------------------------------------------------------
 
 	def btn_add_url(self, widget):
-		dialog = AddUrlDialog(self, self.reader.get_category_list() )
+		dialog = UrlDialog(self, self.reader.get_category_list() )
 
 		web_entry = dialog.run()
 		if web_entry != None:
@@ -373,16 +356,26 @@ class ReaderView( Gtk.Window ):
 	#---------------------------------------------------------------------------
 
 	def load_category_menu(self):
+		# Save current category
+		cur_cat = self.current_category
+
+		# Get categories from reader
 		categories_list = self.reader.get_category_list()
+
+		# Get the TreeView model
 		category_model = self.categories.get_model()
 		category_model.clear()
 
+		# Add the categories
 		for i in categories_list:
 			category_model.append( [i] )
 
+		# Restore the current_category
+		self.current_category = cur_cat
+
 	#---------------------------------------------------------------------------
 
-	def show_category_entries(self, category):
+	def load_category_entries(self, category):
 
 		category_keys = self.reader.get_category( category )
 		new_list = Gtk.ListBox()
@@ -420,9 +413,12 @@ class ReaderView( Gtk.Window ):
 			key = self.reader.add( web_entry )
 
 			# Update the view
-			# TODO: Optimize - add row not reload all
-			# TODO: Add the key given by the model to the WebEntryView
-			self.show_category_entries( self.current_category )
+			# TODO 1: Optimize add - not reload all
+			# TODO 1.1: Add the key given by the model to the WebEntryView
+			self.load_category_entries( self.current_category )
+
+		# Save data
+		self.reader.save_data()
 
 	def del_web_entry(self, web_entry_key ):
 		# Delete the entry by its key
@@ -433,4 +429,30 @@ class ReaderView( Gtk.Window ):
 			self.load_category_menu()
 
 		# Update the view
-		self.show_category_entries( self.current_category )
+		self.load_category_entries( self.current_category )
+
+		# Save data
+		self.reader.save_data()
+
+		#---------------------------------------------------------------------------
+
+	def edit_web_entry(self, key, entry):
+		dialog = UrlDialog(self, self.reader.get_category_list() )
+
+		dialog.set_name( entry.get_name() )
+		dialog.set_url( entry.get_url() )
+		dialog.set_category( entry.get_category() )
+
+		web_entry = dialog.run()
+		if web_entry != None:
+			# Update entry
+			self.reader.update( key, web_entry )
+
+			# Update categories
+			self.load_category_menu()
+
+			# Update current category
+			self.load_category_entries( self.current_category )
+
+			# Save data
+			self.reader.save_data()

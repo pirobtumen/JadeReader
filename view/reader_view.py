@@ -289,14 +289,12 @@ class ReaderView( Gtk.Window ):
 
 		self.categories = Gtk.TreeView( categories_data )
 		self.categories.set_headers_visible(False)
+		self.categories.connect('button-press-event' , self.category_selected)
 
 		renderer = Gtk.CellRendererText()
 
 		column = Gtk.TreeViewColumn("Categories", renderer, text=0)
 		self.categories.append_column(column)
-
-		selection = self.categories.get_selection()
-		selection.connect( "changed", self.category_selected )
 
 		scroll_tree.add( self.categories )
 		self.menu_box.pack_start( scroll_tree,True,True,0 )
@@ -307,14 +305,22 @@ class ReaderView( Gtk.Window ):
 	# Actions
 	#---------------------------------------------------------------------------
 
-	def category_selected(self, selection):
-		model, treeiter = selection.get_selected()
+	def category_selected(self, treeview, event):
+		row_selected = treeview.get_path_at_pos(int(event.x), int(event.y))
+		model = treeview.get_model()
 
-		if treeiter != None:
-			category = model[treeiter][0]
-			if category != self.current_category:
-				self.current_category = category
-				self.load_category_entries( category )
+		if row_selected is not None:
+			path, col, x, y = row_selected
+
+			tree_iter = model.get_iter(path)
+			category = model.get_value(tree_iter,0)
+
+			self.current_category = category
+			self.load_category_entries( category )
+
+			# TODO: Right click
+			#if event.button == 3:
+			# Display menu
 
 	#---------------------------------------------------------------------------
 

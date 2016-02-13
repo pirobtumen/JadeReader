@@ -1,5 +1,3 @@
-#/bin/python3
-
 """
 Copyright (C) 2016  Alberto Sola
 
@@ -17,17 +15,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from model import reader
-from manager_view import manager_view
+# Imports
+#-------------------------------------------------------------------------------
+
 from gi.repository import Gtk
+import webbrowser
 
-# TODO: Check version
+#-------------------------------------------------------------------------------
 
-# Load the model
-reader_model = reader.ReaderDB()
+class ReaderView( Gtk.Window ):
+	def __init__(self, parent, entry_model ):
+		super(Gtk.Window,self).__init__( title="Jade Reader - " + entry_model.get_name() )
+		self.set_default_size(700,400)
+		self.connect("delete-event", self.close )
+		self.show_all()
 
-# Load the view
-reader_view = manager_view.ManagerView( reader_model )
-
-# Run
-Gtk.main()
+	def close(self, window, event ):
+		self.destroy()

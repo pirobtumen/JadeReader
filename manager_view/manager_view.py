@@ -22,185 +22,21 @@ Reader View
 (...)
 
 """
+
 # Imports
 #-------------------------------------------------------------------------------
 
 from gi.repository import Gtk
 import webbrowser
 
-from model import reader
-
-# Classes
-#-------------------------------------------------------------------------------
-
-class UrlDialog( Gtk.Dialog ):
-	def __init__(self, parent, categories, buttons=None):
-		Gtk.Dialog.__init__(self, "New category", parent, 0 )
-		self.set_default_size(150, 100)
-
-		label_name = Gtk.Label("Name:")
-		self.name = Gtk.Entry()
-
-		label_url = Gtk.Label("URL:")
-		self.url = Gtk.Entry()
-
-		label_cat = Gtk.Label("Category:")
-		cat_list = Gtk.ListStore(str)
-
-		for category in categories:
-			cat_list.append( [category] )
-
-		self.cat = Gtk.ComboBox.new_with_model_and_entry(cat_list)
-		self.cat.set_entry_text_column(0)
-
-		#self.cat.set_activates_default(True)
-
-		main_box = self.get_content_area()
-
-		grid = Gtk.Grid()
-		#grid.set_row_homogeneous(True)
-		grid.set_row_spacing(4)
-		grid.set_column_spacing(4)
-
-		grid.add( label_name )
-		grid.attach_next_to( self.name, label_name,
-		Gtk.PositionType.RIGHT, 2, 1 )
-
-		grid.attach_next_to( label_url, label_name,
-		Gtk.PositionType.BOTTOM, 1, 1 )
-
-		grid.attach_next_to( self.url, label_url,
-		Gtk.PositionType.RIGHT, 2, 1 )
-
-		grid.attach_next_to( label_cat, label_url,
-		Gtk.PositionType.BOTTOM, 1, 1 )
-
-		grid.attach_next_to( self.cat, label_cat,
-		Gtk.PositionType.RIGHT, 2, 1 )
-
-		main_box.add( grid )
-
-		super(Gtk.Dialog, self).add_button( "Cancel", Gtk.ResponseType.CANCEL )
-		super(Gtk.Dialog, self).add_button( "Save", Gtk.ResponseType.OK )
-
-		# Set as the default action
-		ok_bttn = self.get_widget_for_response(response_id=Gtk.ResponseType.OK)
-		ok_bttn.set_can_default(True)
-		ok_bttn.grab_default()
-
-	#---------------------------------------------------------------------------
-
-	def set_name(self, name):
-		self.name.set_text(name)
-
-	#---------------------------------------------------------------------------
-
-	def set_url(self, url):
-		self.url.set_text(url)
-	#---------------------------------------------------------------------------
-
-	def set_category(self, category):
-		cat_entry = self.cat.get_child()
-		cat_entry.set_text( category )
-
-	#---------------------------------------------------------------------------
-
-	def run(self):
-		self.show_all()
-		result = super(Gtk.Dialog, self).run()
-
-		web_entry = None
-		category = None
-
-		if result == Gtk.ResponseType.OK:
-			web_entry = reader.ReaderEntry( [ self.name.get_text(), self.url.get_text() ] )
-			category = self.cat.get_child().get_text()
-
-		self.destroy()
-
-		return web_entry, category
+from manager_view.entry_view import EntryView
+from manager_view.entry_edit_view import EntryEditView
+from reader_view.reader_view import ReaderView
+from model.reader import ReaderDB
 
 #-------------------------------------------------------------------------------
 
-class ReaderEntryView(Gtk.ListBoxRow):
-	def __init__( self, parent, data, key ):
-		Gtk.ListBoxRow.__init__(self)
-
-		self.parent = parent
-		self.entry = data
-		self.key = key
-
-		logo = Gtk.Label("Icon", valign=Gtk.Align.CENTER )
-		name = Gtk.Label( self.entry.get_name() )
-		url = Gtk.Label( self.entry.get_url() )
-
-		edit_btn = Gtk.Button("Edit")
-		edit_btn.connect( "clicked", self.btn_edit_entry )
-
-		delete_btn = Gtk.Button("Delete")
-		delete_btn.connect( "clicked", self.btn_del_entry )
-
-		# Row Container
-		hbox = Gtk.Box(spacing=50)
-
-		# Add the Icon
-		hbox.pack_start( logo, False, True, 10 )
-
-		# Add the URL data
-		vbox = Gtk.Box( orientation=Gtk.Orientation.VERTICAL )
-		vbox.pack_start( name, True, True, 0 )
-		vbox.pack_start( url, True, True, 0 )
-		hbox.pack_start(vbox, True, True, 0 )
-
-		# Buttons Box
-		btn_hbox = Gtk.Box()
-		hbox.pack_start( btn_hbox, False, True, 0 )
-
-		btn_hbox.pack_start( edit_btn, False, True, 0 )
-		btn_hbox.pack_start( delete_btn, False, True, 0 )
-
-		self.add(hbox)
-		self.show_all()
-
-	def get_url(self):
-		return self.entry.get_url()
-
-	def get_name(self):
-		return self.entry.get_name()
-
-	def get_entry(self):
-		return self.entry
-
-	def btn_del_entry(self, button):
-		self.parent.del_web_entry( self.key )
-
-	def btn_edit_entry(self, button):
-		self.parent.edit_web_entry( self.key, self.entry )
-
-
-	"""
-	get_key
-	get_category
-	update()
-	set_data( data, key=None )
-	"""
-
-#-------------------------------------------------------------------------------
-# TODO: New file
-
-class WebView( Gtk.Window ):
-	def __init__(self, parent, entry_model ):
-		super(Gtk.Window,self).__init__( title="Jade Reader - " + entry_model.get_name() )
-		self.set_default_size(700,400)
-		self.connect("delete-event", self.close )
-		self.show_all()
-
-	def close(self, window, event ):
-		self.destroy()
-
-#-------------------------------------------------------------------------------
-
-class ReaderView( Gtk.Window ):
+class ManagerView( Gtk.Window ):
 	def __init__(self, reader_model ):
 		super(Gtk.Window,self).__init__( title="Jade Reader" )
 		self.set_default_size(700,400)
@@ -243,10 +79,13 @@ class ReaderView( Gtk.Window ):
 		self.menu_box = Gtk.Box( orientation=Gtk.Orientation.VERTICAL )
 		self.menu_box.set_size_request(150,200)
 
+		separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+
 		self.data_box = Gtk.Box( orientation=Gtk.Orientation.VERTICAL )
 		self.data_box.set_size_request(350,300)
 
 		main_wrap.pack_start( self.menu_box, False, True, 0 )
+		main_wrap.pack_start( separator, False, True, 0 )
 		main_wrap.pack_start( self.data_box, True, True, 0 )
 		# Add to the main box to the window
 		self.add( main_box )
@@ -330,7 +169,7 @@ class ReaderView( Gtk.Window ):
 		# TODO: create a window
 		if entry != None:
 			url = entry.get_url()
-			url_view = WebView( self, entry )
+			url_view = ReaderView( self, entry )
 
 	#---------------------------------------------------------------------------
 
@@ -341,7 +180,7 @@ class ReaderView( Gtk.Window ):
 	#---------------------------------------------------------------------------
 
 	def btn_add_url(self, widget):
-		dialog = UrlDialog(self, self.reader.get_category_list() )
+		dialog = EntryEditView(self, self.reader.get_category_list() )
 
 		web_entry, category = dialog.run()
 		if web_entry != None:
@@ -390,7 +229,7 @@ class ReaderView( Gtk.Window ):
 
 		for key in category_keys:
 			data = self.reader.get( key )
-			new_list.add( ReaderEntryView(self,data,key) )
+			new_list.add( EntryView(self,data,key) )
 
 		child = self.scroll_tree.get_child()
 
@@ -445,7 +284,7 @@ class ReaderView( Gtk.Window ):
 		#---------------------------------------------------------------------------
 
 	def edit_web_entry(self, key, entry):
-		dialog = UrlDialog(self, self.reader.get_category_list() )
+		dialog = EntryEditView(self, self.reader.get_category_list() )
 
 		dialog.set_name( entry.get_name() )
 		dialog.set_url( entry.get_url() )

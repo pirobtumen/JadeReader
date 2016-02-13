@@ -1,14 +1,19 @@
 # JadeReader
 
 Simple and modern Web Manager and RSS reader written in Python3 / Gtk3.
-This first version only manages URLs.
+( This first version only manages URLs. )
+
+What can you do now:
+   - Add webs.
+   - Edit webs.
+   - Delete webs.
+   - Organize them in categories.
 
 ## To Dos [ WIP ]
 
-- Edit Button
-- Delete categories button
-- Load Icon
-- Web Reader View ( RSS reader )
+- Delete / Rename categories .
+- Load Icon.
+- Web Reader View ( RSS reader ).
 
 ## 1. License
 

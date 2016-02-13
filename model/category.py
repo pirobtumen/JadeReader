@@ -51,7 +51,7 @@ class CategoryDB:
 
 		Param[in]: data
 		"""
-		self.key_data = json.loads( data )
+		self.key_data = data
 
 	#---------------------------------------------------------------------------
 	# Keys

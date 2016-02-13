@@ -58,15 +58,19 @@ class FileIO:
 		"""
 		os.remove( self.data_file_name )
 
-	def read(self):
+	def read(self, default_data=None):
 		"""
 		Reads the data from the file and updates the object.
+
+		param[in]: default_data  If the file is empty, this structure is going
+		to be written to disk.
 		"""
 
 		print("\nReading data from config file: " + self.data_file_name)
 
 		data = {}
 
+		# If the file exists
 		if self.check_file():
 			# Get the data
 			with open( self.data_file_name, 'r') as file_data:
@@ -74,6 +78,11 @@ class FileIO:
 
 			# Parse JSON
 			data = json.loads( content )
+
+		# Create a new empty file
+		elif default_data is not None:
+			self.save( default_data )
+			data = default_data
 		else:
 			self.save( data )
 

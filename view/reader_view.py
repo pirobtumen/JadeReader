@@ -110,13 +110,15 @@ class UrlDialog( Gtk.Dialog ):
 		result = super(Gtk.Dialog, self).run()
 
 		web_entry = None
+		category = None
 
 		if result == Gtk.ResponseType.OK:
-			web_entry = reader.ReaderEntry( [ self.name.get_text(), self.url.get_text(), self.cat.get_child().get_text() ] )
+			web_entry = reader.ReaderEntry( [ self.name.get_text(), self.url.get_text() ] )
+			category = self.cat.get_child().get_text()
 
 		self.destroy()
 
-		return web_entry
+		return web_entry, category
 
 #-------------------------------------------------------------------------------
 
@@ -341,9 +343,9 @@ class ReaderView( Gtk.Window ):
 	def btn_add_url(self, widget):
 		dialog = UrlDialog(self, self.reader.get_category_list() )
 
-		web_entry = dialog.run()
+		web_entry, category = dialog.run()
 		if web_entry != None:
-			self.add_web_entry( web_entry )
+			self.add_web_entry( web_entry, category )
 
 	#---------------------------------------------------------------------------
 	# Model / View Update
@@ -410,13 +412,13 @@ class ReaderView( Gtk.Window ):
 
 	#---------------------------------------------------------------------------
 
-	def add_web_entry(self, web_entry):
+	def add_web_entry(self, web_entry, category):
 		if web_entry.valid():
 			# Update categories if neccesary
-			self.add_category_to_menu( web_entry.get_category() )
+			self.add_category_to_menu( category )
 
 			# Update model
-			key = self.reader.add( web_entry )
+			key = self.reader.add( web_entry, category )
 
 			# Update the view
 			# TODO 1: Optimize add - not reload all
@@ -426,9 +428,9 @@ class ReaderView( Gtk.Window ):
 		# Save data
 		self.reader.save_data()
 
-	def del_web_entry(self, web_entry_key ):
+	def del_web_entry(self, key):
 		# Delete the entry by its key
-		category_empty = self.reader.delete_category_element( self.current_category, web_entry_key )
+		category_empty = self.reader.delete_category_element( self.current_category, key )
 
 		# Update category menu
 		if category_empty:
@@ -447,12 +449,12 @@ class ReaderView( Gtk.Window ):
 
 		dialog.set_name( entry.get_name() )
 		dialog.set_url( entry.get_url() )
-		dialog.set_category( entry.get_category() )
+		dialog.set_category( self.current_category )
 
-		web_entry = dialog.run()
+		web_entry, category = dialog.run()
 		if web_entry != None:
 			# Update entry
-			self.reader.update( key, web_entry )
+			self.reader.update( key, web_entry, self.current_category, category )
 
 			# Update categories
 			self.load_category_menu()

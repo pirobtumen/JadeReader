@@ -23,11 +23,8 @@ from gi.repository import Gtk
 
 # TODO: Check version
 
-# Model database file name
-file_name = "data.json"
-
 # Load the model
-reader_model = reader.ReaderDB( file_name )
+reader_model = reader.ReaderDB()
 
 # Load the view
 reader_view = reader_view.ReaderView( reader_model )

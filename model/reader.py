@@ -110,7 +110,7 @@ class ReaderDB:
 		key = str(len(self.data))
 		self.data[key] = entry
 
-		self.update_category( obj.get_category(), key )
+		self.update_category( entry.get_category(), key )
 
 		return key
 

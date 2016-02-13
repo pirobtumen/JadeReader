@@ -22,26 +22,16 @@ class CategoryDB:
 	"""
 	CategoryDB
 	===================
-	Manages the data in JSON format.
-
-	This object has a dictionary which holds the JSON data decoded, so you
-	can easily navigate through it with the 'keys' values.
-
+	This object has a dictionary.
 	Each key has a list of elements. Each element can be anything you need,
 	for example, another list of values, a tuple, etc.
-
-	- Input: String that represent the JSON object.
-	- Output: String with the object data in JSON format.
-
 	"""
 
 	#---------------------------------------------------------------------------
 
 	def __init__(self):
 		"""
-		Initializes the object reading the file.
-		If the file doesn't exist it creates a new one with the default
-		values send as a parameter.
+		Initializes the attributes.
 		"""
 		self.key_data = {}
 
@@ -51,16 +41,15 @@ class CategoryDB:
 
 	def get_data(self):
 		"""
-		Gets the data stored in the object as JSON.
-		Return: string
+		Returns the internal data.
 		"""
-		return json.dumps( self.key_data )
+		return self.key_data
 
 	def set_data(self, data):
 		"""
-		Sets the data stored in the object from a string in JSON.
+		Sets the internal data.
 
-		Param[in]: data String in JSON to be parsed.
+		Param[in]: data
 		"""
 		self.key_data = json.loads( data )
 
@@ -114,9 +103,7 @@ class CategoryDB:
 
 	def get_all_keys(self):
 		"""
-		Get all the keys.
-
-		Return: a list with all the Keys.
+		Return a list with all the Keys.
 		"""
 		return self.key_data.keys()
 

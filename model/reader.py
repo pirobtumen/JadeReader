@@ -29,8 +29,8 @@ Author: Alberto Sola - 2016
 
 import json
 
-from category import CategoryDB
-from file_io import FileIO
+from model.category import CategoryDB
+from model.file_io import FileIO
 
 #-------------------------------------------------------------------------------
 # Reader Model
@@ -38,11 +38,17 @@ from file_io import FileIO
 
 class ReaderDB:
 	def __init__( self, file_name ):
-
+		# File I/O
 		self.data_io = FileIO( file_name, ReaderEntryJSON )
-		self.data = self.data_io.read()
 		self.categories = CategoryDB()
+
+		# Get the data
+		self.data = self.data_io.read()
+		# Parse it
 		self.parse_data()
+
+	# Data IO
+	#---------------------------------------------------------------------------
 
 	def parse_data(self):
 		for key in self.data:
@@ -53,6 +59,9 @@ class ReaderDB:
 			# Update
 			self.data[key] = reader_entry
 			self.update_category( reader_entry.get_category(), key )
+
+	def save_data(self):
+		self.data_io.save( self.data )
 
 	# Categories
 	#---------------------------------------------------------------------------
@@ -70,6 +79,31 @@ class ReaderDB:
 		# Add the category and data
 		self.categories.add_key_val( category, key )
 
+	def delete_category_element(self, category, key):
+		data = self.categories.get_key( category )
+		pos = 0
+
+		# Delete key from data
+		del self.data[key]
+
+		# Delete from its category
+		for element in data:
+			if element == key:
+				self.categories.del_key_val( category, pos )
+			pos += 1
+
+		# Check if category is empty
+		data_empty = not data
+		if data_empty:
+			self.delete_category( category )
+
+		self.save_data()
+
+		return data_empty
+
+	def delete_category(self, category):
+		self.categories.del_key( category )
+
 	# Web Entries
 	#---------------------------------------------------------------------------
 
@@ -80,17 +114,18 @@ class ReaderDB:
 
 		self.update_category( obj.get_category(), key )
 
-		self.data_io.save( self.data )
+		self.save_data()
 
 		return key
-
-	#def remove(self, key):
 
 	def get(self, key):
 		return self.data[key]
 
 	def set(self, key, obj):
 		self.data[key] = obj
+
+	def delete(self, key):
+		del self.data[key]
 
 #-------------------------------------------------------------------------------
 # ReaderEntry

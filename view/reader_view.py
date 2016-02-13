@@ -143,9 +143,10 @@ class AddUrlDialog( Gtk.Dialog ):
 #-------------------------------------------------------------------------------
 
 class ReaderEntryView(Gtk.ListBoxRow):
-	def __init__( self, data, key ):
+	def __init__( self, parent, data, key ):
 		Gtk.ListBoxRow.__init__(self)
 
+		self.parent = parent
 		self.entry = data
 		self.key = key
 
@@ -154,6 +155,7 @@ class ReaderEntryView(Gtk.ListBoxRow):
 		url = Gtk.Label( self.entry.get_url() )
 		edit_btn = Gtk.Button("Edit")
 		delete_btn = Gtk.Button("Delete")
+		delete_btn.connect( "clicked", self.btn_del_entry )
 
 		# Row Container
 		hbox = Gtk.Box(spacing=50)
@@ -186,9 +188,11 @@ class ReaderEntryView(Gtk.ListBoxRow):
 	def get_entry(self):
 		return self.entry
 
+	def btn_del_entry(self, button):
+		self.parent.del_web_entry( self.key )
+
 	"""
 	get_key
-	get_name
 	get_category
 	update()
 	set_data( data, key=None )
@@ -297,10 +301,6 @@ class ReaderView( Gtk.Window ):
 		scroll_tree = Gtk.ScrolledWindow()
 
 		categories_data = Gtk.ListStore( str )
-		categories_list = self.reader.get_category_list()
-
-		for i in categories_list:
-			categories_data.append( [i] )
 
 		self.categories = Gtk.TreeView( categories_data )
 		self.categories.set_headers_visible(False)
@@ -315,6 +315,8 @@ class ReaderView( Gtk.Window ):
 
 		scroll_tree.add( self.categories )
 		self.menu_box.pack_start( scroll_tree,True,True,0 )
+
+		self.load_category_menu()
 
 	#---------------------------------------------------------------------------
 	# Actions
@@ -352,8 +354,7 @@ class ReaderView( Gtk.Window ):
 
 		web_entry = dialog.run()
 		if web_entry != None:
-			self.add_web( web_entry )
-
+			self.add_web_entry( web_entry )
 
 	#---------------------------------------------------------------------------
 	# Model / View Update
@@ -371,16 +372,13 @@ class ReaderView( Gtk.Window ):
 
 	#---------------------------------------------------------------------------
 
-	def set_list_view(self, list_view):
-		child = self.scroll_tree.get_child()
+	def load_category_menu(self):
+		categories_list = self.reader.get_category_list()
+		category_model = self.categories.get_model()
+		category_model.clear()
 
-		if child != None:
-			self.scroll_tree.remove( child )
-
-		self.scroll_tree.add( list_view )
-		self.scroll_tree.show_all()
-
-		list_view.connect( "row-activated", self.web_selected )
+		for i in categories_list:
+			category_model.append( [i] )
 
 	#---------------------------------------------------------------------------
 
@@ -391,9 +389,17 @@ class ReaderView( Gtk.Window ):
 
 		for key in category_keys:
 			data = self.reader.get( key )
-			new_list.add( ReaderEntryView(data,key) )
+			new_list.add( ReaderEntryView(self,data,key) )
 
-		self.set_list_view( new_list )
+		child = self.scroll_tree.get_child()
+
+		if child != None:
+			self.scroll_tree.remove( child )
+
+		self.scroll_tree.add( new_list )
+		self.scroll_tree.show_all()
+
+		new_list.connect( "row-activated", self.web_selected )
 
 	#---------------------------------------------------------------------------
 
@@ -405,7 +411,7 @@ class ReaderView( Gtk.Window ):
 
 	#---------------------------------------------------------------------------
 
-	def add_web(self, web_entry):
+	def add_web_entry(self, web_entry):
 		if web_entry.valid():
 			# Update categories if neccesary
 			self.add_category_to_menu( web_entry.get_category() )
@@ -417,3 +423,14 @@ class ReaderView( Gtk.Window ):
 			# TODO: Optimize - add row not reload all
 			# TODO: Add the key given by the model to the WebEntryView
 			self.show_category_entries( self.current_category )
+
+	def del_web_entry(self, web_entry_key ):
+		# Delete the entry by its key
+		category_empty = self.reader.delete_category_element( self.current_category, web_entry_key )
+
+		# Update category menu
+		if category_empty:
+			self.load_category_menu()
+
+		# Update the view
+		self.show_category_entries( self.current_category )

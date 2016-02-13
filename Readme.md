@@ -6,8 +6,7 @@ This first version only manages URLs.
 ## To Dos [ WIP ]
 
 - Edit Button
-- Delete Button
-- Delete categories
+- Delete categories button
 - Load Icon
 - Web Reader View ( RSS reader )
 

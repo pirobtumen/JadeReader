@@ -60,6 +60,18 @@ class ManagerView( Gtk.Window ):
 		# Data view
 		self.set_data_view()
 
+		# Menu
+		self.load_menu()
+
+	def load_menu(self):
+		# Categories Menu
+		self.cat_menu = Gtk.Menu()
+		i1 = Gtk.MenuItem("Rename")
+		self.cat_menu.append(i1)
+		i2 = Gtk.MenuItem("Delete")
+		self.cat_menu.append(i2)
+		self.cat_menu.show_all()
+
 	#---------------------------------------------------------------------------
 
 	def set_window_containers(self):
@@ -103,14 +115,17 @@ class ManagerView( Gtk.Window ):
 
 	def set_lateral_menu_view(self):
 		# Top buttons
-		add_data_btn = Gtk.Button("Add URL")
-		add_data_btn.set_size_request(100,0)
+
+		add_data_btn = Gtk.Button(label="Add")
 		add_data_btn.connect("clicked", self.btn_add_url )
+		menu_btn = Gtk.Button(label="Menu")
+		menu_btn.connect("clicked", self.btn_menu )
 
 		# TODO: Config button
 		#add_conf_btn = Gtk.Button("Config")
 		#self.tool_box.pack_start( add_conf_btn, False, True, 0 )
 
+		self.menu_box.pack_start( menu_btn, False, True, 0)
 		self.menu_box.pack_start( add_data_btn, False, True, 0)
 
 		# TODO: Search button
@@ -154,9 +169,10 @@ class ManagerView( Gtk.Window ):
 			self.current_category = category
 			self.load_category_entries( category )
 
-			# TODO: Right click
-			#if event.button == 3:
 			# Display menu
+			if event.button == 3:
+				# TODO: Send name
+				self.cat_menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
 
 	#---------------------------------------------------------------------------
 
@@ -180,6 +196,12 @@ class ManagerView( Gtk.Window ):
 		web_entry, category = dialog.run()
 		if web_entry != None:
 			self.add_web_entry( web_entry, category )
+
+	#---------------------------------------------------------------------------
+
+	def btn_menu(self, widget):
+		# TODO: Load Menu
+		print( "Load menu... ")
 
 	#---------------------------------------------------------------------------
 	# Model / View Update

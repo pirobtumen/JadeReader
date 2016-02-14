@@ -117,6 +117,7 @@ class ManagerView( Gtk.Window ):
 		self.header_box = Gtk.Box()
 
 		# Main Window Content
+		# TODO: Min width when resize left
 		main_wrap = Gtk.Paned()
 
 		# Add the sub-boxes to the main box
@@ -147,28 +148,44 @@ class ManagerView( Gtk.Window ):
 	#---------------------------------------------------------------------------
 
 	def set_lateral_menu_view(self):
-		# TODO: Tree view -> Show all, Favs...
+		# DEFAULT
+		#-----------------------
+		default_data = Gtk.ListStore( str )
 
-		# Categories tree view
+		self.default_options_menu = Gtk.TreeView( default_data )
+		self.default_options_menu.set_headers_visible(False)
+		#TODO: Add actions
+		#self.default_options_menu.connect('button-press-event' , self.category_selected)
+
+		renderer = Gtk.CellRendererText()
+
+		column = Gtk.TreeViewColumn("Default", renderer, text=0)
+		self.default_options_menu.append_column(column)
+
+		# Add the default categories
+		default_data.append( ["Show all"] )
+		# TODO: default_data.append( "Fav")
+
+		# Add to the window
+		self.menu_box.pack_start( self.default_options_menu, False, True, 0 )
+
+		# CATEGORIES
+		#-----------------------
 
 		scroll_tree = Gtk.ScrolledWindow()
-		#scroll_tree.set_size_request( 0, 300 )
 
 		categories_data = Gtk.ListStore( str )
 
 		self.categories = Gtk.TreeView( categories_data )
-		self.categories.set_headers_visible(False)
 		self.categories.connect('button-press-event' , self.category_selected)
-
-		renderer = Gtk.CellRendererText()
 
 		column = Gtk.TreeViewColumn("Categories", renderer, text=0)
 		self.categories.append_column(column)
 
 		scroll_tree.add( self.categories )
 		self.menu_box.pack_start( scroll_tree,True,True,0 )
-		#self.menu_box.pack_start( scroll_tree,False,True,0 )
 
+		# Load categories
 		self.load_category_menu()
 
 	#---------------------------------------------------------------------------

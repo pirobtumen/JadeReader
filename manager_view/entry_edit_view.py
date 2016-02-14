@@ -25,7 +25,7 @@ from model.reader import ReaderEntry
 
 class EntryEditView( Gtk.Dialog ):
 	def __init__(self, parent, categories, buttons=None):
-		Gtk.Dialog.__init__(self, "New category", parent, 0 )
+		Gtk.Dialog.__init__(self, "URL Manager", parent, 0 )
 		self.set_default_size(150, 100)
 
 		label_name = Gtk.Label("Name:")

@@ -54,9 +54,6 @@ class ManagerView( Gtk.Window ):
 		# Set containers
 		self.set_window_containers()
 
-		# Toolbox
-		self.set_toolbox_view()
-
 		# Lateral menu
 		self.set_lateral_menu_view()
 
@@ -68,6 +65,8 @@ class ManagerView( Gtk.Window ):
 	def set_window_containers(self):
 		# Set the main window structure
 		main_box = Gtk.Box( orientation=Gtk.Orientation.VERTICAL )
+
+		#TODO: not used
 		self.tool_box = Gtk.Box()
 
 		main_wrap = Gtk.Box()
@@ -92,39 +91,34 @@ class ManagerView( Gtk.Window ):
 
 	#---------------------------------------------------------------------------
 
-	def set_toolbox_view(self):
-		# TODO: Change style
-		add_data_btn = Gtk.Button("Add URL")
-		add_data_btn.set_size_request(100,0)
-		add_data_btn.connect("clicked", self.btn_add_url )
-
-		self.tool_box.pack_start( add_data_btn, False, True, 0 )
-
-		separator = Gtk.Label("")
-		separator.hide()
-		self.tool_box.pack_start( separator, True, True, 0 )
-
-		# Search
-		search_bar = Gtk.Entry()
-		self.tool_box.pack_start( search_bar, False, True, 0 )
-
-		# TODO: Config button
-		#add_conf_btn = Gtk.Button("Config")
-		#self.tool_box.pack_start( add_conf_btn, False, True, 0 )
-
-	#---------------------------------------------------------------------------
-
 	def set_data_view(self):
 		# Empty tree view
 		self.scroll_tree = Gtk.ScrolledWindow()
+
+		# TODO: Add initial view
 
 		self.data_box.pack_start( self.scroll_tree, True, True, 0 )
 
 	#---------------------------------------------------------------------------
 
 	def set_lateral_menu_view(self):
-		# Tree view
+		# Top buttons
+		add_data_btn = Gtk.Button("Add URL")
+		add_data_btn.set_size_request(100,0)
+		add_data_btn.connect("clicked", self.btn_add_url )
+
+		# TODO: Config button
+		#add_conf_btn = Gtk.Button("Config")
+		#self.tool_box.pack_start( add_conf_btn, False, True, 0 )
+
+		self.menu_box.pack_start( add_data_btn, False, True, 0)
+
+		# TODO: Search button
+		# TODO: Tree view -> Show all, Favs...
+
+		# Categories tree view
 		scroll_tree = Gtk.ScrolledWindow()
+		#scroll_tree.set_size_request( 0, 300 )
 
 		categories_data = Gtk.ListStore( str )
 
@@ -139,6 +133,7 @@ class ManagerView( Gtk.Window ):
 
 		scroll_tree.add( self.categories )
 		self.menu_box.pack_start( scroll_tree,True,True,0 )
+		#self.menu_box.pack_start( scroll_tree,False,True,0 )
 
 		self.load_category_menu()
 

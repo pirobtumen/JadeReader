@@ -37,6 +37,7 @@ from model.reader import ReaderDB
 #-------------------------------------------------------------------------------
 
 class ManagerView( Gtk.Window ):
+
 	def __init__(self, reader_model ):
 		super(Gtk.Window,self).__init__( title="Jade Reader" )
 		self.set_default_size(700,400)
@@ -51,8 +52,12 @@ class ManagerView( Gtk.Window ):
 	#---------------------------------------------------------------------------
 
 	def load_components(self):
+
 		# Set containers
 		self.set_window_containers()
+
+		# Header Bar
+		self.set_header_bar()
 
 		# Lateral menu
 		self.set_lateral_menu_view()
@@ -62,6 +67,27 @@ class ManagerView( Gtk.Window ):
 
 		# Menu
 		self.load_menu()
+
+	def set_header_bar(self):
+
+		# Header bar
+		header_bar = Gtk.HeaderBar()
+		header_bar.set_title("Jade Reader")
+		header_bar.set_subtitle("Web Manager")
+		header_bar.set_show_close_button(True)
+
+		# Add URL button
+		add_data_btn = Gtk.Button(label="Add")
+		add_data_btn.connect("clicked", self.btn_add_url )
+		header_bar.pack_start( add_data_btn )
+
+		# Add a MenuButton
+		menu_btn = Gtk.MenuButton(label="Menu")
+		menu_btn.connect("clicked", self.btn_menu )
+		header_bar.pack_end( menu_btn )
+
+		# Change the Window's title bar
+		self.set_titlebar( header_bar )
 
 	def load_menu(self):
 		# Categories Menu
@@ -78,13 +104,13 @@ class ManagerView( Gtk.Window ):
 		# Set the main window structure
 		main_box = Gtk.Box( orientation=Gtk.Orientation.VERTICAL )
 
-		#TODO: not used
-		self.tool_box = Gtk.Box()
+		# TODO: not used
+		self.header_box = Gtk.Box()
 
 		main_wrap = Gtk.Box()
 
 		# Add the sub-boxes to the main box
-		main_box.pack_start( self.tool_box, False, True, 0 )
+		main_box.pack_start( self.header_box, False, True, 0 )
 		main_box.pack_start( main_wrap, True, True, 0 )
 
 		self.menu_box = Gtk.Box( orientation=Gtk.Orientation.VERTICAL )
@@ -115,18 +141,6 @@ class ManagerView( Gtk.Window ):
 
 	def set_lateral_menu_view(self):
 		# Top buttons
-
-		add_data_btn = Gtk.Button(label="Add")
-		add_data_btn.connect("clicked", self.btn_add_url )
-		menu_btn = Gtk.Button(label="Menu")
-		menu_btn.connect("clicked", self.btn_menu )
-
-		# TODO: Config button
-		#add_conf_btn = Gtk.Button("Config")
-		#self.tool_box.pack_start( add_conf_btn, False, True, 0 )
-
-		self.menu_box.pack_start( menu_btn, False, True, 0)
-		self.menu_box.pack_start( add_data_btn, False, True, 0)
 
 		# TODO: Search button
 		# TODO: Tree view -> Show all, Favs...

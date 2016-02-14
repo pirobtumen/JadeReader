@@ -27,12 +27,15 @@ Reader View
 #-------------------------------------------------------------------------------
 
 from gi.repository import Gtk
+from gi.repository import Gio
 import webbrowser
 
 from manager_view.entry_view import EntryView
 from manager_view.entry_edit_view import EntryEditView
 from reader_view.reader_view import ReaderView
 from model.reader import ReaderDB
+
+import easyscrap
 
 #-------------------------------------------------------------------------------
 
@@ -75,7 +78,7 @@ class ManagerView( Gtk.Window ):
 		# Header bar
 		header_bar = Gtk.HeaderBar()
 		header_bar.set_title("Jade Reader")
-		header_bar.set_subtitle("Web Manager")
+		header_bar.set_subtitle("Manager")
 		header_bar.set_show_close_button(True)
 
 		# Add URL button
@@ -85,12 +88,14 @@ class ManagerView( Gtk.Window ):
 
 		# Add a MenuButton
 		menu_btn = Gtk.MenuButton(label="Menu")
-		menu_btn.connect("clicked", self.btn_menu )
-		header_bar.pack_end( menu_btn )
 
-		# TODO: Menu Button
-		# - Search
-		# - Config
+		menumodel = Gio.Menu()
+		menu_btn.set_menu_model(menumodel)
+		menumodel.append("Search", "a")
+		menumodel.append("Config", "a")
+		menumodel.append("About", "a")
+
+		header_bar.pack_end( menu_btn )
 
 		# Change the Window's title bar
 		self.set_titlebar( header_bar )
@@ -213,10 +218,21 @@ class ManagerView( Gtk.Window ):
 	#---------------------------------------------------------------------------
 
 	def web_selected( self, list_view, entry ):
-		# TODO: create a window
-		if entry != None:
-			url = entry.get_url()
-			url_view = ReaderView( self, entry )
+
+		# Get the EntryView and open the Reader
+		if entry is not None:
+
+			# Look for RSS
+			scrap = easyscrap.EasyScrap( entry.get_url() )
+			rss = scrap.get_rss_url()
+
+			# If there isn't RSS open in Web Browser
+			if rss is None:
+				self.open_browser( entry.get_url() )
+			else:
+				url_view = ReaderView( self, entry.get_name() )
+				url_view.set_rss( rss )
+				url_view.run()
 
 	#---------------------------------------------------------------------------
 
@@ -232,12 +248,6 @@ class ManagerView( Gtk.Window ):
 		web_entry, category = dialog.run()
 		if web_entry != None:
 			self.add_web_entry( web_entry, category )
-
-	#---------------------------------------------------------------------------
-
-	def btn_menu(self, widget):
-		# TODO: Load Menu
-		print( "Load menu... ")
 
 	#---------------------------------------------------------------------------
 	# Model / View Update

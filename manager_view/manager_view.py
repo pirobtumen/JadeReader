@@ -53,11 +53,11 @@ class ManagerView( Gtk.Window ):
 
 	def load_components(self):
 
-		# Set containers
-		self.set_window_containers()
-
 		# Header Bar
 		self.set_header_bar()
+
+		# Set containers
+		self.set_window_containers()
 
 		# Lateral menu
 		self.set_lateral_menu_view()
@@ -67,6 +67,8 @@ class ManagerView( Gtk.Window ):
 
 		# Menu
 		self.load_menu()
+
+	#---------------------------------------------------------------------------
 
 	def set_header_bar(self):
 
@@ -86,11 +88,17 @@ class ManagerView( Gtk.Window ):
 		menu_btn.connect("clicked", self.btn_menu )
 		header_bar.pack_end( menu_btn )
 
+		# TODO: Menu Button
+		# - Search
+		# - Config
+
 		# Change the Window's title bar
 		self.set_titlebar( header_bar )
 
+	#---------------------------------------------------------------------------
+
 	def load_menu(self):
-		# Categories Menu
+		# Categories Right-Click Menu
 		self.cat_menu = Gtk.Menu()
 		i1 = Gtk.MenuItem("Rename")
 		self.cat_menu.append(i1)
@@ -105,9 +113,11 @@ class ManagerView( Gtk.Window ):
 		main_box = Gtk.Box( orientation=Gtk.Orientation.VERTICAL )
 
 		# TODO: not used
+		# A window Header
 		self.header_box = Gtk.Box()
 
-		main_wrap = Gtk.Box()
+		# Main Window Content
+		main_wrap = Gtk.Paned()
 
 		# Add the sub-boxes to the main box
 		main_box.pack_start( self.header_box, False, True, 0 )
@@ -115,16 +125,13 @@ class ManagerView( Gtk.Window ):
 
 		self.menu_box = Gtk.Box( orientation=Gtk.Orientation.VERTICAL )
 		self.menu_box.set_size_request(150,200)
-
-		separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+		main_wrap.add1( self.menu_box )
 
 		self.data_box = Gtk.Box( orientation=Gtk.Orientation.VERTICAL )
 		self.data_box.set_size_request(350,300)
+		main_wrap.add2( self.data_box )
 
-		main_wrap.pack_start( self.menu_box, False, True, 0 )
-		main_wrap.pack_start( separator, False, True, 0 )
-		main_wrap.pack_start( self.data_box, True, True, 0 )
-		# Add to the main box to the window
+		# Add the main box to the window
 		self.add( main_box )
 
 	#---------------------------------------------------------------------------
@@ -140,12 +147,10 @@ class ManagerView( Gtk.Window ):
 	#---------------------------------------------------------------------------
 
 	def set_lateral_menu_view(self):
-		# Top buttons
-
-		# TODO: Search button
 		# TODO: Tree view -> Show all, Favs...
 
 		# Categories tree view
+
 		scroll_tree = Gtk.ScrolledWindow()
 		#scroll_tree.set_size_request( 0, 300 )
 

@@ -29,7 +29,18 @@ class FileIO:
 	FileIO
 	=====================
 
-	(...)
+	It manages a file for I/O operations.
+
+	Input:
+		Read the data and parses it from JSON.
+
+	Output:
+		Encode the data to JSON and write to disk.
+
+
+	You only have to give a file name and it manages everything.
+
+	- The file has to be in JSON format.
 
 	"""
 
@@ -40,7 +51,7 @@ class FileIO:
 			and add some default keys.
 
 			Param[in]: file_name String with the file name.
-			Param[in]: def_keys 'Default keys' if the file doesn't exists.
+			Param[in]: encoder A custom JSONEncoder object.
 		"""
 		self.encoder = encoder
 		self.data_file_name = file_name

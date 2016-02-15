@@ -43,12 +43,9 @@ class EntryEditView( Gtk.Dialog ):
 		self.cat = Gtk.ComboBox.new_with_model_and_entry(cat_list)
 		self.cat.set_entry_text_column(0)
 
-		#self.cat.set_activates_default(True)
-
 		main_box = self.get_content_area()
 
 		grid = Gtk.Grid()
-		#grid.set_row_homogeneous(True)
 		grid.set_row_spacing(4)
 		grid.set_column_spacing(4)
 
@@ -70,13 +67,17 @@ class EntryEditView( Gtk.Dialog ):
 
 		main_box.add( grid )
 
-		super(Gtk.Dialog, self).add_button( "Cancel", Gtk.ResponseType.CANCEL )
-		super(Gtk.Dialog, self).add_button( "Save", Gtk.ResponseType.OK )
+		self.add_button( "Cancel", Gtk.ResponseType.CANCEL )
+		self.add_button( "Save", Gtk.ResponseType.OK )
 
-		# Set as the default action
-		ok_bttn = self.get_widget_for_response(response_id=Gtk.ResponseType.OK)
-		ok_bttn.set_can_default(True)
-		ok_bttn.grab_default()
+        # Let the entry activate when "Enter" is pressed
+		self.name.set_activates_default(True)
+		self.url.set_activates_default(True)
+
+        # Make 'OK' button the default action
+		ok_btn = self.get_widget_for_response( Gtk.ResponseType.OK )
+		ok_btn.set_can_default(True)
+		ok_btn.grab_default()
 
 	#---------------------------------------------------------------------------
 
@@ -103,9 +104,8 @@ class EntryEditView( Gtk.Dialog ):
 		category = None
 
 		if result == Gtk.ResponseType.OK:
-			web_entry = ReaderEntry( [ self.name.get_text(), self.url.get_text() ] )
-			category = self.cat.get_child().get_text()
+			web_entry = ReaderEntry( [ self.name.get_text(), self.url.get_text(), self.cat.get_child().get_text() ] )
 
 		self.destroy()
 
-		return web_entry, category
+		return web_entry

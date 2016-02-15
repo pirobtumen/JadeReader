@@ -32,14 +32,73 @@ from model.category import CategoryDB
 from model.file_io import FileIO
 
 #-------------------------------------------------------------------------------
+# Reader Entry
+#-------------------------------------------------------------------------------
+
+class ReaderEntry:
+	"""
+	Object that contains ReaderEntry's data:
+		- Name
+		- URL
+        - Category
+	"""
+	def __init__(self, data ):
+		self.data = data
+
+	def get_name(self):
+		return self.data[ 0 ]
+
+	def get_url(self):
+		return self.data[ 1 ]
+
+	def get_category(self):
+		return self.data[2]
+
+	def get_data(self):
+		return self.data
+
+	def set_category(self, new):
+		self.data[2] = new
+
+	def valid(self):
+		# TODO: validate data
+		return True
+
+
+class ReaderEntryJSON( json.JSONEncoder ):
+	"""
+	Custom JSON Encoder for a Reader Entry.
+	"""
+	def default(self, obj):
+		# Check if 'obj' is a ReaderEntry
+		if isinstance(obj, ReaderEntry):
+			return [obj.get_name(), obj.get_url(), obj.get_category()]
+
+		# Let the base class default method raises the TypeError
+		return json.JSONEncoder.default(self, obj)
+
+
+#-------------------------------------------------------------------------------
 # Reader Model
 #-------------------------------------------------------------------------------
 
 class ReaderDB:
 	"""
-	ReaderDB
+	This object reads the data from a JSON file and adds it to a dictionary.
 
-	(...)
+	In the dictionary each key has a val, a ReaderEntry that holds the URL info.
+
+	CategoryDB provides a fast way to access all keys in one category.
+	Each entry has a 'Category' attribute that is added (with the entry's key)
+	to the "CategoryDB" object.
+
+	So ReaderDB provides:
+
+	- Fast access to each entry by its key.
+	- Fast access to each category by its name.
+
+	( Also other methods: set, get, delete, check... )
+
 	"""
 	def __init__( self, data_fname="data.json" ):
 		# File I/O
@@ -60,35 +119,25 @@ class ReaderDB:
 		Reads the data from the JSON file and parses the entries
 		and the categories.
 		"""
-		# Default structure if the file is empty
-		data = { "data" : {}, "categories" : {} }
 
 		# Get the data
-		data = self.data_io.read( data )
-
-		# Set the data
-		self.data = data["data"]
-		self.categories.set_data( data["categories"] )
+		self.data = self.data_io.read()
 
 		# Parse the data
 		for key in self.data:
-			# ReaderEntry
-			entry = self.data[key]
-			reader_entry = ReaderEntry( entry )
+			# Create data
+			entry = ReaderEntry( self.data[key] )
+			self.data[key] = entry
 
-			# Update
-			self.data[key] = reader_entry
+			# Add the key-category
+			self.categories.add_key_val( entry.get_category(), key )
 
 	def save_data(self):
 		"""
 		Builds the JSON structure in a dictionary and saves it to disk.
 		"""
-		data = {}
 
-		data["data"] = self.data
-		data["categories"] = self.categories.get_data()
-
-		self.data_io.save( data )
+		self.data_io.save( self.data )
 
 	# Categories
 	#---------------------------------------------------------------------------
@@ -101,7 +150,7 @@ class ReaderDB:
 		"""
 		return self.categories.check_key( name )
 
-	def get_category(self, category):
+	def get_category_entries(self, category):
 		"""
 		Returns the keys that belong to a certain category.
 
@@ -115,48 +164,31 @@ class ReaderDB:
 		"""
 		return self.categories.get_all_keys()
 
-	def update_category(self, category, key):
-		"""
-		Adds a new category ( if it doesn't exist ) and appends
-		the key to that category.
-		"""
-		# Add the category and data
-		self.categories.add_key_val( category, key )
-
-	def delete_category_element(self, category, key):
-		"""
-		Deletes a key in a category. If the category is empty it is
-		also deleted.
-		"""
-		data = self.categories.get_key( category )
-		pos = 0
-
-		# Delete key from data
-		del self.data[key]
-
-		# Delete from its category
-		for element in data:
-			if element == key:
-				self.categories.del_key_val( category, pos )
-			pos += 1
-
-		# Check if category is empty
-		data_empty = not data
-		if data_empty:
-			self.delete_category( category )
-
-		return data_empty
-
 	def delete_category(self, category):
 		"""
 		Deletes a category and its elements.
 		"""
+		# TODO: Move to "Uncategorized"
 		self.categories.del_key( category )
+
+	def rename_category(self, old, new ):
+		"""
+		Renames a category.
+		"""
+		# Rename the category
+		self.categories.rename( old, new )
+
+		# Get the keys of this category
+		keys = self.categories.get_key( new )
+
+		# Update the categories
+		for key in keys:
+			self.data[key].set_category( new )
 
 	# Web Entries
 	#---------------------------------------------------------------------------
 
-	def add(self, entry, category):
+	def add(self, entry):
 		"""
 		Adds a new entry and it is appended to a category.
 		"""
@@ -167,25 +199,34 @@ class ReaderDB:
 		self.data[key] = entry
 
 		# Add the category
-		self.update_category( category, key )
+		self.categories.add_key_val( entry.get_category(), key )
 
 		return key
 
-	def update(self, key, entry, old_category, new_category):
+	def set(self, key, entry ):
 		"""
-		Updates a entry (by its key) and its category.
+		Updates a entry by its key.
 		"""
+
+		old_category = self.data[key].get_category()
+		new_category = entry.get_category()
 
 		if old_category != new_category:
 			# Remove category key
-			self.delete_category_element( old_category, key )
+			self.categories.del_key_val( old_category, key )
 
 			# Add to the new category
-			self.update_category( new_category, key )
+			self.categories.add_key_val( new_category, key )
 
 		# Update data
 		self.data[key] = entry
 
+
+	def get_all(self):
+		"""
+		Returns all the keys.
+		"""
+		return self.data.keys()
 
 	def get(self, key):
 		"""
@@ -195,45 +236,13 @@ class ReaderDB:
 
 	def delete(self, key):
 		"""
-		Deletes the key 'key' and its data.
+		Deletes a key.
+		If the category is empty it is also deleted.
 		"""
+		category = self.get(key).get_category()
+
+		# Delete key from data
 		del self.data[key]
 
-#-------------------------------------------------------------------------------
-# ReaderEntry
-#-------------------------------------------------------------------------------
-
-class ReaderEntry:
-	"""
-	Object that contains ReaderEntry's data:
-		- Name
-		- URL
-	"""
-	def __init__(self, data ):
-		self.data = data
-
-	def get_name(self):
-		return self.data[ 0 ]
-
-	def get_url(self):
-		return self.data[ 1 ]
-
-	def get_data(self):
-		return self.data
-
-	def valid(self):
-		# TODO: validate data
-		return True
-
-
-class ReaderEntryJSON( json.JSONEncoder ):
-	"""
-	Custom JSON Encoder for a Reader Entry.
-	"""
-	def default(self, obj):
-		# Check if 'obj' is a ReaderEntry
-		if isinstance(obj, ReaderEntry):
-			return [obj.get_name(), obj.get_url()]
-
-		# Let the base class default method raises the TypeError
-		return json.JSONEncoder.default(self, obj)
+		# Delete from its category
+		return self.categories.del_key_val( category, key )

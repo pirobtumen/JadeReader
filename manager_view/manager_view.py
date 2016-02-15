@@ -16,10 +16,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 """
-Reader View
+Manager View
 =======================
 
-(...)
+Simple, easy and modern Web Manager.
 
 """
 
@@ -32,6 +32,7 @@ import webbrowser
 
 from manager_view.entry_view import EntryView
 from manager_view.entry_edit_view import EntryEditView
+from manager_view.inputdialog import InputDialog
 from reader_view.reader_view import ReaderView
 from model.reader import ReaderDB
 
@@ -74,7 +75,6 @@ class ManagerView( Gtk.Window ):
 	#---------------------------------------------------------------------------
 
 	def set_header_bar(self):
-
 		# Header bar
 		header_bar = Gtk.HeaderBar()
 		header_bar.set_title("Jade Reader")
@@ -91,9 +91,7 @@ class ManagerView( Gtk.Window ):
 
 		menumodel = Gio.Menu()
 		menu_btn.set_menu_model(menumodel)
-		menumodel.append("Search", "a")
-		menumodel.append("Config", "a")
-		menumodel.append("About", "a")
+		menumodel.append("About", "None")
 
 		header_bar.pack_end( menu_btn )
 
@@ -105,10 +103,16 @@ class ManagerView( Gtk.Window ):
 	def load_menu(self):
 		# Categories Right-Click Menu
 		self.cat_menu = Gtk.Menu()
-		i1 = Gtk.MenuItem("Rename")
-		self.cat_menu.append(i1)
-		i2 = Gtk.MenuItem("Delete")
-		self.cat_menu.append(i2)
+
+		# Options
+		rename = Gtk.MenuItem("Rename")
+		rename.connect( "activate", self.rename_category )
+		#delete = Gtk.MenuItem("Delete")
+		#delete.connect( "activate", self.delete_category )
+
+		# Add buttons
+		self.cat_menu.append(rename)
+		#self.cat_menu.append(delete)
 		self.cat_menu.show_all()
 
 	#---------------------------------------------------------------------------
@@ -146,33 +150,21 @@ class ManagerView( Gtk.Window ):
 		# Empty tree view
 		self.scroll_tree = Gtk.ScrolledWindow()
 
-		# TODO: Add initial view
-
+		# Initial view
+		self.show_all_entries(None)
 		self.data_box.pack_start( self.scroll_tree, True, True, 0 )
 
 	#---------------------------------------------------------------------------
 
 	def set_lateral_menu_view(self):
-		# DEFAULT
+		# DEFAULT MENU
 		#-----------------------
-		default_data = Gtk.ListStore( str )
 
-		self.default_options_menu = Gtk.TreeView( default_data )
-		self.default_options_menu.set_headers_visible(False)
-		#TODO: Add actions
-		#self.default_options_menu.connect('button-press-event' , self.category_selected)
-
-		renderer = Gtk.CellRendererText()
-
-		column = Gtk.TreeViewColumn("Default", renderer, text=0)
-		self.default_options_menu.append_column(column)
-
-		# Add the default categories
-		default_data.append( ["Show all"] )
-		# TODO: default_data.append( "Fav")
+		self.show_all_btn = Gtk.Button("Show all")
+		self.show_all_btn.connect( "clicked", self.show_all_entries )
 
 		# Add to the window
-		self.menu_box.pack_start( self.default_options_menu, False, True, 0 )
+		self.menu_box.pack_start( self.show_all_btn, False, True, 0 )
 
 		# CATEGORIES
 		#-----------------------
@@ -180,6 +172,7 @@ class ManagerView( Gtk.Window ):
 		scroll_tree = Gtk.ScrolledWindow()
 
 		categories_data = Gtk.ListStore( str )
+		renderer = Gtk.CellRendererText()
 
 		self.categories = Gtk.TreeView( categories_data )
 		self.categories.connect('button-press-event' , self.category_selected)
@@ -197,34 +190,53 @@ class ManagerView( Gtk.Window ):
 	# Actions
 	#---------------------------------------------------------------------------
 
-	def category_selected(self, treeview, event):
+	def get_option_selected(self, treeview, event):
+		category = None
+
+		# Get row selectec by event coordinates
 		row_selected = treeview.get_path_at_pos(int(event.x), int(event.y))
+
+		# Get the treeview model
 		model = treeview.get_model()
 
+		# Check if there is not row selected
 		if row_selected is not None:
+			# Unpack the values
 			path, col, x, y = row_selected
 
+			# Get a model's iterator from path
 			tree_iter = model.get_iter(path)
+
+			# Get iterator value -> Category
 			category = model.get_value(tree_iter,0)
 
-			self.current_category = category
-			self.load_category_entries( category )
+		return category
+
+	#---------------------------------------------------------------------------
+
+	def category_selected(self, treeview, event):
+		# Get the category selected
+		category = self.get_option_selected( treeview, event )
+
+		if category is not None:
+			# Load the category
+			if category != self.current_category:
+				self.current_category = category
+				self.load_category_entries( category )
 
 			# Display menu
 			if event.button == 3:
-				# TODO: Send name
 				self.cat_menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
 
 	#---------------------------------------------------------------------------
 
 	def web_selected( self, list_view, entry ):
-
 		# Get the EntryView and open the Reader
 		if entry is not None:
 
 			# Look for RSS
 			scrap = easyscrap.EasyScrap( entry.get_url() )
-			rss = scrap.get_rss_url()
+			title, rss = scrap.get_rss_url()
 
 			# If there isn't RSS open in Web Browser
 			if rss is None:
@@ -237,7 +249,7 @@ class ManagerView( Gtk.Window ):
 	#---------------------------------------------------------------------------
 
 	def open_browser(self, url):
-		print( "Opening: " + url )
+		# TODO: EasyScrap: URL is valid + Add scheme
 		webbrowser.open_new_tab("http://" + url)
 
 	#---------------------------------------------------------------------------
@@ -245,24 +257,12 @@ class ManagerView( Gtk.Window ):
 	def btn_add_url(self, widget):
 		dialog = EntryEditView(self, self.reader.get_category_list() )
 
-		web_entry, category = dialog.run()
+		web_entry = dialog.run()
 		if web_entry != None:
-			self.add_web_entry( web_entry, category )
+			self.add_web_entry( web_entry )
 
 	#---------------------------------------------------------------------------
 	# Model / View Update
-	#---------------------------------------------------------------------------
-
-	"""
-	def show_all(self):
-		pass
-
-	show_about()
-
-	show_info()
-
-	"""
-
 	#---------------------------------------------------------------------------
 
 	def load_category_menu(self):
@@ -285,42 +285,100 @@ class ManagerView( Gtk.Window ):
 
 	#---------------------------------------------------------------------------
 
+	def show_all_entries(self, button):
+		# Set current category
+		self.current_category = 0
+
+		# Unselect categories
+		selection = self.categories.get_selection()
+		selection.unselect_all()
+
+		# Create a new ListBox
+		entries = Gtk.ListBox()
+		entries.connect( "row-activated", self.web_selected )
+
+		# Get all the keys from the model
+		all_keys = self.reader.get_all()
+
+		# Build and add each entry
+		for key in all_keys:
+			entry_view = EntryView(self, self.reader.get(key), key)
+			entries.add( entry_view )
+
+		# Update the view
+		self.load_entries( entries )
+
+	#---------------------------------------------------------------------------
+
 	def load_category_entries(self, category):
+		# Show all
+		if category == 0:
+			self.show_all_entries( None )
 
-		category_keys = self.reader.get_category( category )
-		new_list = Gtk.ListBox()
+		else:
+			# Create a new ListBox
+			entries = Gtk.ListBox()
+			entries.connect( "row-activated", self.web_selected )
 
-		for key in category_keys:
-			data = self.reader.get( key )
-			new_list.add( EntryView(self,data,key) )
+			# Get the keys that belong to 'category'
+			category_keys = self.reader.get_category_entries( category )
 
+			# Build and add each entry
+			for key in category_keys:
+				data = self.reader.get( key )
+				entries.add( EntryView(self,data,key) )
+
+			# Update the view
+			self.load_entries( entries )
+
+	#---------------------------------------------------------------------------
+
+	def load_entries(self, list_box):
+		# Get the ListView
 		child = self.scroll_tree.get_child()
 
+		# Remove its child
 		if child != None:
 			self.scroll_tree.remove( child )
 
-		self.scroll_tree.add( new_list )
+		# Add the new list
+		self.scroll_tree.add( list_box )
 		self.scroll_tree.show_all()
 
-		new_list.connect( "row-activated", self.web_selected )
+	#---------------------------------------------------------------------------
+
+	def rename_category(self, widget):
+		# Renames the current category
+		input_dialog = InputDialog( self, "New name" )
+
+		# Get the new name
+		new_category = input_dialog.show()
+
+		# Rename and show categories
+		if new_category is not None:
+			self.reader.rename_category( self.current_category, new_category )
+			self.load_category_menu()
+
+			# Save data
+			self.reader.save_data()
 
 	#---------------------------------------------------------------------------
 
-	def add_category_to_menu(self, name):
-
-		if not self.reader.check_category(name):
-			model = self.categories.get_model()
-			model.append( [name] )
+	#def delete_category(self, widget):
+		# Delete all the entries in the current category.
 
 	#---------------------------------------------------------------------------
 
-	def add_web_entry(self, web_entry, category):
-		if web_entry.valid():
+	def add_web_entry(self, entry):
+		# Check if the entry is valid
+		if entry.valid():
 			# Update categories if neccesary
-			self.add_category_to_menu( category )
+			if not self.reader.check_category(entry.get_category()):
+				model = self.categories.get_model()
+				model.append( [entry.get_category()] )
 
 			# Update model
-			key = self.reader.add( web_entry, category )
+			key = self.reader.add( entry )
 
 			# Update the view
 			# TODO 1: Optimize add - not reload all
@@ -332,7 +390,7 @@ class ManagerView( Gtk.Window ):
 
 	def del_web_entry(self, key):
 		# Delete the entry by its key
-		category_empty = self.reader.delete_category_element( self.current_category, key )
+		category_empty = self.reader.delete(key)
 
 		# Update category menu
 		if category_empty:
@@ -347,16 +405,20 @@ class ManagerView( Gtk.Window ):
 		#---------------------------------------------------------------------------
 
 	def edit_web_entry(self, key, entry):
+		# Create the dialog
 		dialog = EntryEditView(self, self.reader.get_category_list() )
 
+		# Set the data
 		dialog.set_name( entry.get_name() )
 		dialog.set_url( entry.get_url() )
-		dialog.set_category( self.current_category )
+		dialog.set_category( entry.get_category() )
 
-		web_entry, category = dialog.run()
+		# Get the user input
+		web_entry = dialog.run()
+
 		if web_entry != None:
 			# Update entry
-			self.reader.update( key, web_entry, self.current_category, category )
+			self.reader.set( key, web_entry )
 
 			# Update categories
 			self.load_category_menu()

@@ -22,9 +22,11 @@ class CategoryDB:
 	"""
 	CategoryDB
 	===================
-	This object has a dictionary.
-	Each key has a list of elements. Each element can be anything you need,
-	for example, another list of values, a tuple, etc.
+	This object holds key-values.
+
+	Each element can be anything you need: a list, a tuple, etc.
+
+	It provides a fast access to a list of elements in one category by its key.
 	"""
 
 	#---------------------------------------------------------------------------
@@ -107,6 +109,11 @@ class CategoryDB:
 		"""
 		return self.key_data.keys()
 
+	def rename(self, old, new):
+		"""
+		Renames a key.
+		"""
+		self.key_data[new] = self.key_data.pop(old)
 
 	#---------------------------------------------------------------------------
 	#  Values
@@ -125,19 +132,22 @@ class CategoryDB:
 		else:
 			self.add_key( key, data )
 
-	def del_key_val(self, key, pos ):
+	def del_key_val(self, key, data ):
 		"""
-		Deletes a element associated with a key. You need to specify the
-		position of this element.
+		Deletes a element associated with a key.
 
 		Param[in]: key Key value in the dictionary.
-		Param[in]: pos Value at position to be removed.
+		Param[in]: data Item to be removed.
 		"""
-		if self.check_key( key ):
-			data = self.get_key( key )
-			if pos < len( data ):
-				del data[pos]
+		data_list = self.key_data[key]
+		data_list.remove(data)
 
+		empty = not data_list
+
+		if empty:
+			self.del_key(key)
+
+		return empty
 
 	#---------------------------------------------------------------------------
 	# Others

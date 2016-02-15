@@ -29,6 +29,7 @@ Simple, easy and modern Web Manager.
 from gi.repository import Gtk
 from gi.repository import Gio
 import webbrowser
+import feedparser
 
 from manager_view.entry_view import EntryView
 from manager_view.entry_edit_view import EntryEditView
@@ -234,17 +235,22 @@ class ManagerView( Gtk.Window ):
 		# Get the EntryView and open the Reader
 		if entry is not None:
 
-			# Look for RSS
+			# TODO: Display loading icon
+
+			# Look for feed
 			scrap = easyscrap.EasyScrap( entry.get_url() )
-			title, rss = scrap.get_rss_url()
+			title, feed_url = scrap.get_rss_url()
 
 			# If there isn't RSS open in Web Browser
-			if rss is None:
+			if feed_url is None:
 				self.open_browser( entry.get_url() )
 			else:
-				url_view = ReaderView( self, entry.get_name() )
-				url_view.set_rss( rss )
-				url_view.run()
+				data = self.feedparser_parse( feed_url )
+
+				if data is not None:
+					view = ReaderView( self, entry.get_name(), data )
+				else:
+					self.open_browser( entry.get_url() )
 
 	#---------------------------------------------------------------------------
 
@@ -402,7 +408,7 @@ class ManagerView( Gtk.Window ):
 		# Save data
 		self.reader.save_data()
 
-		#---------------------------------------------------------------------------
+	#---------------------------------------------------------------------------
 
 	def edit_web_entry(self, key, entry):
 		# Create the dialog
@@ -428,3 +434,15 @@ class ManagerView( Gtk.Window ):
 
 			# Save data
 			self.reader.save_data()
+
+	#---------------------------------------------------------------------------
+
+	def feedparser_parse(self, url):
+		try:
+			return feedparser.parse(url)
+		except TypeError:
+			if 'drv_libxml2' in feedparser.PREFERRED_XML_PARSERS:
+				feedparser.PREFERRED_XML_PARSERS.remove('drv_libxml2')
+				return feedparser.parse(url)
+			else:
+			    return None

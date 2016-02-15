@@ -16,14 +16,13 @@ or in other disk. You'll never lost your data :)
 - **It's browser independet!**
 
 
-**To Dos [ WIP ]**
+** To Dos **
 
-- Delete / Rename categories .
 - Load Icon.
-- Web Reader View ( RSS reader ).
 - Import / Export data.
 - About.
 - Search.
+- Sort.
 
 ## 1. License
 
@@ -34,6 +33,7 @@ This software is under the GNU License. See "License.txt" for more info.
 - Python3
 - Gtk3
 - EasyScrap - <https://github.com/pirobtumen/EasyScrap>
+- feedparser
 
 ## 3. Installation
 

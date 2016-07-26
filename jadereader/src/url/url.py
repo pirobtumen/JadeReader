@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from urlutils import *
+from ..url import urlutils
 
 class Url:
     '''
@@ -26,38 +26,40 @@ class Url:
 
     def __init__(self,name,url,feed,category):
         self.name = name
-        self.url = url
         self.feed = feed
-        self.status = URL_STATUS_OK
         self.category = category
+        self.status = self.URL_STATUS_OK
+
+        self.set_url( url ) # Adds http scheme
 
         # TODO: Check STATUS
+        # self.status = self.check_status()
 
     # --------------------------------------------------------------------------
-    #
+    # Getters
     # --------------------------------------------------------------------------
 
     def get_name(self):
-        return name
+        return self.name
 
     def get_url(self):
-        return url
+        return self.url
 
     def get_feed(self):
-        return feed
+        return self.feed
 
     def get_category(self):
-        return category
+        return self.category
 
     # --------------------------------------------------------------------------
-    #
+    # Setters
     # --------------------------------------------------------------------------
 
     def set_name(self, name):
         self.name = name
 
     def set_url(self, url):
-        self.url = url
+        self.url = urlutils.url_set_scheme(url, "http://")
 
     def set_feed(self, feed):
         self.feed = feed
@@ -66,15 +68,18 @@ class Url:
         self.category = category
 
     # --------------------------------------------------------------------------
-    #
+    # Methods
     # --------------------------------------------------------------------------
 
     #def check_status(self):
 
     def update_feed(self):
-        web = get_webpage(self.url)
+        """
+        Look for <link> that contains "rss+xml" url.
+        """
+        web = urlutils.get_webpage(self.url)
 
-        feed = get_feed(web)
+        feed = urlutils.get_feed(web)
 
         self.feed = feed
 

@@ -16,7 +16,7 @@ limitations under the License.
 
 import sqlite3
 
-class ReaderDB:
+class UrlDB:
     def __init__(self, db_name):
         # Connect to our DataBase
         self.db_name = db_name
@@ -48,7 +48,7 @@ class ReaderDB:
         self.db.close()
         self.db = sqlite3.connect( self.db_name )
 
-    def add_url(self, name, url, feed, category):
+    def add_url(self, data):
         sql_query = 'INSERT INTO ' + self.table_name + ' VALUES(?,?,?,?)'
 
         self.db.execute(sql_query, data)
@@ -67,7 +67,7 @@ class ReaderDB:
         cursor = self.db.execute("SELECT Rss FROM " + self.table_name + " WHERE Url=?", [url] )
         return cursor
 
-    def get_url_list(self, quantity=0, category=None):
+    def get_url_list(self, category=None):
         if category == None:
             cursor = self.db.execute("SELECT * FROM " + self.table_name)
         else:

@@ -26,6 +26,8 @@ It provides you some functions for working with URL's.
 import re
 import requests
 
+# ------------------------------------------------------------------------------
+
 def url_get_scheme( url, clean=False ):
     """
     Given a URL it returns the scheme.
@@ -47,6 +49,8 @@ def url_get_scheme( url, clean=False ):
 
     return scheme
 
+# ------------------------------------------------------------------------------
+
 def url_split_scheme( url, clean=False ):
     """
     Given a URL it split it in two parts, the scheme and the rest of the url.
@@ -67,6 +71,8 @@ def url_split_scheme( url, clean=False ):
 
     return (scheme, url_base)
 
+# ------------------------------------------------------------------------------
+
 def url_set_scheme( url, scheme ):
     """
     Given a URL it changes ( or adds a new one if the URL doesn't have one )
@@ -76,6 +82,8 @@ def url_set_scheme( url, scheme ):
     """
     old_scheme, url = url_split_scheme( url )
     return scheme + url
+
+# ------------------------------------------------------------------------------
 
 def get_webpage(url):
     """
@@ -87,6 +95,8 @@ def get_webpage(url):
     """
     # TODO: Handle exceptions
     return requests.get(url).text
+
+# ------------------------------------------------------------------------------
 
 def get_attr(attr_name, data):
     """
@@ -108,6 +118,7 @@ def get_attr(attr_name, data):
 
     return data[start_pos:end_pos]
 
+# ------------------------------------------------------------------------------
 
 def get_feed(data):
     """

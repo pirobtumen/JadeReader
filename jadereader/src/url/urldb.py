@@ -30,12 +30,11 @@ class UrlDB:
         self.table_name = 'URL'
 
         # Query
-        sql_query = 'CREATE TABLE IF NOT EXISTS ' + table_name + '''(
+        sql_query = 'CREATE TABLE IF NOT EXISTS ' + self.table_name + '''(
         NAME TEXT NOT NULL,
         URL TEXT PRIMARY KEY NOT NULL,
-        CATEGORY TEXT NOT NULL,
-
-        RSS TEXT
+        RSS TEXT,
+        CATEGORY TEXT NOT NULL
         );'''
 
         # Send the query
@@ -58,8 +57,15 @@ class UrlDB:
         cursor = self.db.execute("SELECT * FROM " + self.table_name + " WHERE Url=?", [url] )
         return cursor
 
-    def update(self, data):
-        update_query = "UPDATE " + self.table_name + " SET name=?, url=?, category=?, rss=? WHERE url=?"
+    def check_url(self, url):
+        cursor = self.db.execute("SELECT count(*) FROM " + self.table_name + " WHERE Url=?", [url] )
+        if cursor.fetchone()[0] == 0:
+            return False
+        else:
+            return True
+
+    def update_url(self, data):
+        update_query = "UPDATE " + self.table_name + " SET name=?, url=?, rss=?, category=? WHERE url=?"
         self.db.execute( update_query, data )
         self.db.commit()
 
@@ -81,7 +87,12 @@ class UrlDB:
 
     def get_categories(self):
         cursor = self.db.execute("SELECT DISTINCT Category FROM " + self.table_name)
-        return cursor
+        categories = []
+
+        for cat_name in cursor:
+            categories.append(cat_name[0])
+
+        return categories
 
     def del_category(self, category):
         delete_query = "DELETE FROM " + self.table_name + " WHERE Category=?"

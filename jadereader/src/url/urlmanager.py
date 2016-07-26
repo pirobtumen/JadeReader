@@ -14,6 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from ..url.urldb import UrlDB
+from ..url.url import Url
+from ..url import urlutils
+
 class UrlManager:
     '''
     '''
@@ -30,22 +34,30 @@ class UrlManager:
         """
         @param [in] url : Url Object
         """
-        data = (url.get_name(), url.get_url(), url.get_feed(), url.get_category())
-        self.db.add_url( data )
+        exists = self.db.check_url(url.get_url())
+
+        if not exists:
+            data = (url.get_name(), url.get_url(), url.get_feed(), url.get_category())
+            self.db.add_url( data )
+            exists = False
 
     def get_url(self, url):
         """
         @param [in] url : string
         """
         data = self.db.get_url(url)
-        return Url(data)
+        print(data)
+        return "A"
 
-    def update_url(self, url):
-        data = (url.get_name(), url.get_url(), url.get_feed(), url.get_category())
+    def update_url(self, new_url, old_url):
+        data = (new_url.get_name(), new_url.get_url(), new_url.get_feed(), new_url.get_category(), old_url.get_url())
         self.db.update_url(data)
 
     def del_url(self, url):
         """
+        Note: the URL must have the scheme (http://, ...), if not,
+        it won't be deleted.
+
         @param [in] url : string
         """
 
@@ -60,7 +72,7 @@ class UrlManager:
         urls = []
 
         for url in url_data:
-            urls.append( Url(url) )
+            urls.append( Url(url[0],url[1],url[2],url[3]) )
 
         return urls
 

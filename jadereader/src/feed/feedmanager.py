@@ -14,41 +14,58 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from jadereader.src.feed.feed import Feed
+from jadereader.src.url.url import Url
 import feedparser
 
 class FeedManager:
     '''
     '''
 
-    def __init__(self):
-        self.url_manager = UrlManager()
+    def download_feed(self, url_list):
 
-        self.feed = {}
+        # TODO: Before download check if it already exists.
+        self.feed_data = {}
 
-        self.update()
-
-    def update_all(self):
-        self.feed = {}
-
-        url_list = url_manager.get_all_url()
+        feeds = []
 
         for url in url_list:
-            self.download_feed( url )
+            url_url = url.get_url()
+            url_feed = url.get_feed()
 
-    #def update_url(self, url):
+            if url_feed is not None:
+                feed = self.parse_feed( url_feed )
+                feeds += feed
+                #if feed:
+                self.feed_data[url_url] = feed
 
-    #def update_category(self, category):
-    #   url_list = self.url_manager.get_category_url( category )
-    #   for url in url_list:
+        return feed
 
-    def download_feed(self, url):
-        feed_url = url.get_feed()
-        feed_list = []
-        #feed_tree =
+    def get_all_feed(self):
+        feed = []
 
-        self.feed[url.get_url()] = feed_list
+        for key in self.feed_data:
+            feed += self.feed_data[key]
 
-    def get_categories(self):
-        return self.url_manager.get_categories()
+        return feed
 
-    def get_feed(self, url):
+    #def get_feed(self,url):
+
+    def parse_feed(self, feed_url):
+
+        # feedparser issue with libxml2
+        try:
+            data = feedparser.parse(feed_url)
+        except TypeError:
+            if 'drv_libxml2' in feedparser.PREFERRED_XML_PARSERS:
+                feedparser.PREFERRED_XML_PARSERS.remove('drv_libxml2')
+                data = feedparser.parse(feed_url)
+            else:
+                raise
+
+        feeds = []
+
+        for post in data.entries:
+            feeds.append( Feed(post.title, post.link, post.summary) )
+
+        return feeds

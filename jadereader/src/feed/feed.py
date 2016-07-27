@@ -18,26 +18,26 @@ class Feed:
     '''
     '''
 
-    def __init__(self, title, link, data):
+    def __init__(self, title, data, link):
         self.title = title
         self.link = link
         self.data = data
 
     # --------------------------------------------------------------------------
-    #
+    # GETTERS
     # --------------------------------------------------------------------------
 
     def get_title(self):
-        return title
+        return self.title
 
     def get_link(self):
-        return link
+        return self.link
 
     def get_data(self):
-        return data
+        return self.data
 
     # --------------------------------------------------------------------------
-    #
+    # SETTERS
     # --------------------------------------------------------------------------
 
     def set_title(self, title):
@@ -48,9 +48,3 @@ class Feed:
 
     def set_data(self,data):
         self.data = data
-
-    # --------------------------------------------------------------------------
-    #
-    # --------------------------------------------------------------------------
-
-    # def parse_data(self):

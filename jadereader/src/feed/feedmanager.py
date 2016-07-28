@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from jadereader.src.feed.feed import Feed
-from jadereader.src.url.url import Url
+from src.feed.feed import Feed
+from src.url.url import Url
 import feedparser
 
 class FeedManager:
@@ -39,7 +39,7 @@ class FeedManager:
                 #if feed:
                 self.feed_data[url_url] = feed
 
-        return feed
+        return feeds
 
     def get_all_feed(self):
         feed = []
@@ -66,6 +66,6 @@ class FeedManager:
         feeds = []
 
         for post in data.entries:
-            feeds.append( Feed(post.title, post.link, post.summary) )
+            feeds.append( Feed(post.title, post.summary, post.link) )
 
         return feeds
